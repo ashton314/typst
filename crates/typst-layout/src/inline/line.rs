@@ -501,7 +501,7 @@ pub fn commit(
     // Handle hanging punctuation to the left.
     if let Some(text) = line.items.leading_text()
         && let Some(glyph) = text.glyphs.first()
-        && !text.dir.is_positive()
+        // && !text.dir.is_positive()
         && text.styles.get(TextElem::overhang)
         && (line.items.len() > 1 || text.glyphs.len() > 1)
     {
@@ -677,6 +677,10 @@ fn overhang(c: char) -> f64 {
         // Dashes.
         '–' | '—' => 0.2,
         '-' | '\u{ad}' => 0.55,
+
+        // Quotes. FIXME: do smart quotes
+        '"' | '\'' => 0.8,
+        '“' | '”' => 0.8,
 
         // Punctuation.
         '.' | ',' => 0.8,
