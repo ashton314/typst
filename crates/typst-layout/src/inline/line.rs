@@ -6,7 +6,7 @@ use typst_library::foundations::Resolve;
 use typst_library::introspection::{SplitLocator, Tag, TagFlags};
 use typst_library::layout::{Abs, Dir, Em, Fr, Frame, FrameItem, Point};
 use typst_library::model::ParLineMarker;
-use typst_library::text::{Lang, TextElem, variant};
+use typst_library::text::{Lang, SmartQuotes, TextElem, variant};
 use typst_utils::Numeric;
 
 use super::*;
@@ -501,11 +501,10 @@ pub fn commit(
     // Handle hanging punctuation to the left.
     if let Some(text) = line.items.leading_text()
         && let Some(glyph) = text.glyphs.first()
-        // && !text.dir.is_positive()
         && text.styles.get(TextElem::overhang)
         && (line.items.len() > 1 || text.glyphs.len() > 1)
     {
-        let amount = overhang(glyph.c) * glyph.x_advance.at(glyph.size);
+        let amount = overhang(glyph.c, text.styles) * glyph.x_advance.at(glyph.size);
         offset -= amount;
         remaining += amount;
     }
@@ -517,7 +516,7 @@ pub fn commit(
         && text.styles.get(TextElem::overhang)
         && (line.items.len() > 1 || text.glyphs.len() > 1)
     {
-        let amount = overhang(glyph.c) * glyph.x_advance.at(glyph.size);
+        let amount = overhang(glyph.c, text.styles) * glyph.x_advance.at(glyph.size);
         remaining += amount;
     }
 
@@ -672,22 +671,28 @@ fn add_par_line_marker(
 ///
 /// For more discussion, see:
 /// <https://recoveringphysicist.com/21/>
-fn overhang(c: char) -> f64 {
-    match c {
-        // Dashes.
-        '–' | '—' => 0.2,
-        '-' | '\u{ad}' => 0.55,
+fn overhang(c: char, styles: StyleChain) -> f64 {
+    let SmartQuotes {
+        single_open: so,
+        single_close: sc,
+        double_open: dbo,
+        double_close: dbc,
+    } = SmartQuotes::get_in(styles);
 
-        // Quotes. FIXME: do smart quotes
-        '"' | '\'' => 0.8,
-        '“' | '”' => 0.8,
+    match c.to_string().as_str() {
+        // Dashes.
+        "–" | "—" => 0.2,
+        "-" | "\u{ad}" => 0.55,
 
         // Punctuation.
-        '.' | ',' => 0.8,
-        ':' | ';' => 0.3,
+        "." | "," => 0.8,
+        ":" | ";" => 0.3,
+
+        // Quotes
+        q if q == so || q == sc || q == dbo || q == dbc => 0.9,
 
         // Arabic
-        '\u{60C}' | '\u{6D4}' => 0.4,
+        "\u{60C}" | "\u{6D4}" => 0.4,
 
         _ => 0.0,
     }
