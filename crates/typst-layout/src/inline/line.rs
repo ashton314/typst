@@ -672,12 +672,7 @@ fn add_par_line_marker(
 /// For more discussion, see:
 /// <https://recoveringphysicist.com/21/>
 fn overhang(c: char, styles: StyleChain) -> f64 {
-    let SmartQuotes {
-        single_open: so,
-        single_close: sc,
-        double_open: dbo,
-        double_close: dbc,
-    } = SmartQuotes::get_in(styles);
+    let smart_quotes = SmartQuotes::get_in(styles);
 
     match c.to_string().as_str() {
         // Dashes.
@@ -689,7 +684,7 @@ fn overhang(c: char, styles: StyleChain) -> f64 {
         ":" | ";" => 0.3,
 
         // Quotes
-        q if q == so || q == sc || q == dbo || q == dbc => 0.9,
+        q if smart_quotes.contains(q) => 0.9,
 
         // Arabic
         "\u{60C}" | "\u{6D4}" => 0.4,
