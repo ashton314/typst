@@ -306,6 +306,11 @@ impl<'s> SmartQuotes<'s> {
     pub fn fallback(double: bool) -> &'static str {
         if double { "\"" } else { "'" }
     }
+
+    /// Check if a given character is one of the smart quotes
+    pub fn contains(&self, quote_char: &str) -> bool {
+        [self.single_open, self.single_close, self.double_open, self.double_close].contains(&quote_char)
+    }
 }
 
 /// An opening and closing quote.
